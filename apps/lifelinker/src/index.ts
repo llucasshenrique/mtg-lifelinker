@@ -1,12 +1,20 @@
-import { Hono } from 'hono';
-import { poweredBy } from 'hono/powered-by';
+import { OpenAPIHono } from '@hono/zod-openapi';
+import { logger } from 'hono/logger';
+import { prettyJSON } from 'hono/pretty-json';
+import { LifelinkerBindings } from './bindings.type';
+import { RegisterCreateRoomRoute } from './room/create-room.handler';
 
-const app = new Hono();
+const app = new OpenAPIHono<LifelinkerBindings>();
 
-app.use('*', poweredBy());
+app.use(logger());
+app.use('*', prettyJSON());
+app.notFound((c) => c.json({ message: 'Not found', ok: false }));
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!');
-});
+app.openAPIRegistry.registerComponent('securitySchemes', 'Bearer', {
+  type: 'http',
+  scheme: 'bearer',
+})
 
-export default app;
+RegisterCreateRoomRoute(app);
+
+export default app
